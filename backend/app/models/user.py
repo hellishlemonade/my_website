@@ -6,7 +6,7 @@ from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.post import Post
-from models.base import Base
+from app.models.base import Base
 
 
 class UserRole(Enum):
@@ -26,9 +26,8 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(20), unique=True)
     _password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[UserRole] = mapped_column(
-        SQLEnum(UserRole, name="user_role_enum"),
+        SQLEnum(UserRole, name="user_role_enum", native_enum=False),
         default=UserRole.CUSTOMER,
-        native_enum=False,
         nullable=True,
     )
 
