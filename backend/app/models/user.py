@@ -5,6 +5,7 @@ from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.models.post import Post
 from models.base import Base
 
 
@@ -29,6 +30,10 @@ class User(Base):
         default=UserRole.CUSTOMER,
         native_enum=False,
         nullable=True,
+    )
+
+    posts: Mapped[list["Post"]] = relationship(
+        back_populates="author", uselist=True
     )
 
     def set_password(self, password):
