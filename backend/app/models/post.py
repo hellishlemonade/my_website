@@ -30,3 +30,20 @@ class Post(BaseContent):
     title: Mapped[Optional[str]] = mapped_column(String(50))
 
     author: Mapped["User"] = relationship(back_populates="posts", uselist=False)
+    comments: Mapped[list["Comment"]] = relationship(
+        back_populates="post", uselist=True
+    )
+
+
+class Comment(BaseContent):
+    __tablename__ = "comments"
+
+    post_id: Mapped[int] = mapped_column(
+        ForeignKey("posts.id", ondelete="CASCADE")
+    )
+    is_visible: Mapped[bool] = mapped_column(default=True)
+
+    author: Mapped["User"] = relationship(back_populates="comments", uselist=False)
+    post: Mapped["Post"] = relationship(
+        back_populates="comments", uselist=False
+    )

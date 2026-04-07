@@ -1,11 +1,11 @@
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.post import Post
+from app.models.post import Comment, Post
 from app.models.base import Base
 
 
@@ -32,6 +32,9 @@ class User(Base):
     )
 
     posts: Mapped[list["Post"]] = relationship(
+        back_populates="author", uselist=True
+    )
+    comments: Mapped[list["Comment"]] = relationship(
         back_populates="author", uselist=True
     )
 
