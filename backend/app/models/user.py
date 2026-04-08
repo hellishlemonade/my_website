@@ -5,7 +5,7 @@ from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.post import Comment, Post
+from app.models.post import Comment, Post, post_likes
 from app.models.base import Base
 
 
@@ -36,6 +36,9 @@ class User(Base):
     )
     comments: Mapped[list["Comment"]] = relationship(
         back_populates="author", uselist=True
+    )
+    liked_posts: Mapped[list["Post"]] = relationship(
+        back_populates="liked_by", secondary=post_likes
     )
 
     def set_password(self, password):

@@ -1,12 +1,23 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import ForeignKey, DateTime, String, func
+from sqlalchemy import Column, DateTime, ForeignKey, String, Table, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import Text
-
 from app.models.user import User
 from models.base import Base
+
+
+post_likes = Table(
+    "post_likes",
+    Base.metadata,
+    Column(
+        "user_id", ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    ),
+    Column(
+        "post_id", ForeignKey("posts.id", ondelete="CASCADE"), primary_key=True
+    ),
+)
 
 
 class BaseContent(Base):
@@ -33,6 +44,9 @@ class Post(BaseContent):
     comments: Mapped[list["Comment"]] = relationship(
         back_populates="post", uselist=True
     )
+    liked_by: Mapped[list["User"]] = relationship(
+        back_populates="liked_posts", secondary=post_likes
+    )
 
 
 class Comment(BaseContent):
@@ -43,7 +57,9 @@ class Comment(BaseContent):
     )
     is_visible: Mapped[bool] = mapped_column(default=True)
 
-    author: Mapped["User"] = relationship(back_populates="comments", uselist=False)
+    author: Mapped["User"] = relationship(
+        back_populates="comments", uselist=False
+    )
     post: Mapped["Post"] = relationship(
         back_populates="comments", uselist=False
     )
