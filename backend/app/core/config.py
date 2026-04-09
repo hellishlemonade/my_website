@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     DB_NAME: str = "blog_db"
     DB_USER: str = "defaultuser"
     DB_PASS: str = ""
+    SECRET_KEY: str = ""
+    ALGORITHM: str = ""
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(
