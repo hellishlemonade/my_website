@@ -13,6 +13,7 @@ class SPostRead(SPostCreate):
     id: int
     created_at: datetime
     updated_at: datetime
+    likes_count: int
 
 
 class SPostPaginationRead(BaseModel):
