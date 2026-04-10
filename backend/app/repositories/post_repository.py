@@ -1,7 +1,7 @@
 from sqlalchemy import func, select
 
 from app.database.session import session
-from app.models.post import Post
+from app.models.post import Post, post_likes
 from app.schemas.pagination import SPagination
 from app.schemas.post import SPostCreate
 
@@ -28,17 +28,25 @@ class PostRepository:
             total = total_result.scalar() or 0
             skip = (pagination.page - 1) * pagination.per_page
             query = (
-                select(Post)
+                select(
+                    Post, func.count(post_likes.c.user_id).label("likes_count")
+                )
+                .outerjoin(post_likes, Post.id == post_likes.c.post_id)
+                .group_by(Post.id)
                 .order_by(Post.created_at)
                 .limit(pagination.per_page)
                 .offset(skip)
             )
             result = await new_session.execute(query)
-            posts = result.scalars().all()
+            posts_with_likes = []
+            for row in result.all():
+                post = row[0]
+                post.likes_count = row[1]
+                posts_with_likes.append(post)
             has_next = total > (pagination.page * pagination.per_page)
             has_prev = pagination.page > 1
             return {
-                "items": posts,
+                "items": posts_with_likes,
                 "total": total,
                 "page": pagination.page,
                 "per_page": pagination.per_page,
