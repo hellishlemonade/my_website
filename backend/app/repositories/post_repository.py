@@ -98,6 +98,7 @@ class PostRepository:
     async def like_post(cls, user_id: int, post_id: int) -> Post | None:
         async with session() as new_session:
             stmt = insert(post_likes).values(user_id=user_id, post_id=post_id)
+            is_liked = True
             try:
                 await new_session.execute(stmt)
             except IntegrityError:
@@ -107,27 +108,22 @@ class PostRepository:
                     post_likes.c.post_id == post_id,
                 )
                 await new_session.execute(stmt)
+                is_liked = False
             likes_subquery = (
                 select(func.count(post_likes.c.user_id))
                 .where(post_likes.c.post_id == post_id)
                 .scalar_subquery()
             )
-            is_liked_subquery = select(
-                exists().where(
-                    post_likes.c.post_id == Post.id,
-                    post_likes.c.user_id == user_id,
-                )
-            ).scalar_subquery()
             await new_session.commit()
             post_query = select(
                 Post,
                 likes_subquery.label("likes_count"),
-                is_liked_subquery.label("is_liked"),
             ).where(Post.id == post_id)
             result = await new_session.execute(post_query)
             row = result.first()
             if row:
-                post, count_val, is_liked = row
+                post, count_val = row
                 post.likes_count = count_val
                 post.is_liked = is_liked
                 return post
+            return None
