@@ -86,6 +86,39 @@ class PostRepository:
             }
 
     @classmethod
+    async def get_post(cls, post_id: int, user_id: int | None):
+        async with session() as new_session:
+            likes_count_subquery = (
+                select(func.count(post_likes.c.user_id))
+                .where(post_likes.c.post_id == post_id)
+                .scalar_subquery()
+            )
+            if user_id:
+                is_liked_subquery = select(
+                    exists()
+                    .where(
+                        post_likes.c.post_id == post_id,
+                        post_likes.c.user_id == user_id,
+                    )
+                ).scalar_subquery()
+            else:
+                is_liked_subquery = select(literal(False)).scalar_subquery()
+            post_query = select(
+                Post,
+                likes_count_subquery.label("likes_count"),
+                is_liked_subquery.label("is_liked"),
+            ).where(Post.id == post_id)
+            executed_query = await new_session.execute(post_query)
+            result = executed_query.all()
+            if result:
+                post_with_likes = result[0]
+                post = post_with_likes[0]
+                post.likes_count = post_with_likes[1]
+                post.is_liked = post_with_likes[2]
+                return post
+            return None
+
+    @classmethod
     async def create_post(cls, data: SPostCreate, author_id: int) -> Post:
         async with session() as new_session:
             post_dict = data.model_dump()
