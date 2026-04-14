@@ -13,7 +13,8 @@ class SPostRead(SPostCreate):
     id: int
     created_at: datetime
     updated_at: datetime
-    likes_count: int
+    likes_count: int = 0
+    is_liked: bool = False
 
 
 class SPostPaginationRead(BaseModel):
@@ -23,3 +24,15 @@ class SPostPaginationRead(BaseModel):
     per_page: int
     has_next: bool
     has_prev: bool
+
+
+class SCommentCreate(BaseModel):
+    content: str
+
+
+class SCommentRead(BaseModel):
+    post_id: int
+    author_id: int
+    content: str
+    created_at: datetime
+    updated_at: datetime
