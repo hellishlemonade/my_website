@@ -34,6 +34,10 @@ class PostRepository:
                 Принимает ID пользователя и ID поста. Возвращает обновленный
                 объект Post с актуальными данными по лайкам для корректного
                 отображения на фронтенде.
+    
+    -likes_subquery: Дополнительный метод, который формирует подзапросы для получения
+                     количества лайков и флага is_liked для отображения статуса для
+                     конкретного пользователя.
     """
 
     @classmethod
@@ -41,24 +45,7 @@ class PostRepository:
         cls, pagination: SPagination, user_id: int | None
     ) -> dict:
         async with session() as new_session:
-            likes_count_subquery = (
-                select(func.count(post_likes.c.user_id))
-                .where(post_likes.c.post_id == Post.id)
-                .correlate(Post)
-                .scalar_subquery()
-            )
-            if user_id:
-                is_liked_subquery = select(
-                    exists()
-                    .where(
-                        post_likes.c.post_id == Post.id,
-                        post_likes.c.user_id == user_id,
-                    )
-                    .correlate(Post)
-                ).scalar_subquery()
-            else:
-                is_liked_subquery = select(literal(False)).scalar_subquery()
-
+            likes_count_subquery, is_liked_subquery = cls.likes_subquery(user_id)
             skip = (pagination.page - 1) * pagination.per_page
             query = (
                 select(
@@ -94,21 +81,7 @@ class PostRepository:
     @classmethod
     async def get_post(cls, post_id: int, user_id: int | None):
         async with session() as new_session:
-            likes_count_subquery = (
-                select(func.count(post_likes.c.user_id))
-                .where(post_likes.c.post_id == post_id)
-                .scalar_subquery()
-            )
-            if user_id:
-                is_liked_subquery = select(
-                    exists()
-                    .where(
-                        post_likes.c.post_id == post_id,
-                        post_likes.c.user_id == user_id,
-                    )
-                ).scalar_subquery()
-            else:
-                is_liked_subquery = select(literal(False)).scalar_subquery()
+            likes_count_subquery, is_liked_subquery = cls.likes_subquery(user_id)
             post_query = select(
                 Post,
                 likes_count_subquery.label("likes_count"),
@@ -148,3 +121,24 @@ class PostRepository:
                 await new_session.execute(stmt)
             await new_session.commit()
             return await cls.get_post(post_id, user_id)
+
+    @classmethod
+    def likes_subquery(cls, user_id: int | None):
+        likes_count_subquery = (
+            select(func.count(post_likes.c.user_id))
+            .where(post_likes.c.post_id == Post.id)
+            .correlate(Post)
+            .scalar_subquery()
+        )
+        if user_id:
+            is_liked_subquery = select(
+                exists()
+                .where(
+                    post_likes.c.post_id == Post.id,
+                    post_likes.c.user_id == user_id,
+                )
+                .correlate(Post)
+            ).scalar_subquery()
+        else:
+            is_liked_subquery = select(literal(False)).scalar_subquery()
+        return likes_count_subquery, is_liked_subquery
