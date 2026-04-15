@@ -28,6 +28,18 @@ class SUserCreate(BaseModel):
     role: UserRole = UserRole.CUSTOMER
 
 
+class SUserRead(BaseModel):
+    id: int
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    username: str = Field(min_length=3, max_length=20)
+    role: UserRole = UserRole.CUSTOMER
+
+
 class SUserToken(BaseModel):
     access_token: str
     token_type: str
+
+
+class TokenData(BaseModel):
+    user_id: int
